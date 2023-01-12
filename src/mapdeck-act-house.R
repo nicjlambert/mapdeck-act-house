@@ -9,18 +9,20 @@ packages <- c('tidyverse', 'rgdal',  'mapdeck', 'sf')
 
 # Check if packages are installed and install them if necessary
 lapply(packages, function(x) {
-  ifelse(x %in% installed.packages(), library(x, character.only = TRUE), 
-         install.packages(x, dependencies = TRUE, repos = CRAN))
+  if (!require(x, character.only = TRUE)) {
+    install.packages(x, dependencies = TRUE, repos = CRAN)
+    library(x, character.only = TRUE)
+  }
 })
 
-act_house <- read.csv(file.path("data", "raw", "ACT_address.csv"))
+act_house <- read.csv(file.path("..", "data", "ACT_Address.csv"))
 
 # Convert act_house to an sf object
 point <- st_as_sf(act_house, coords = c("LONGITUDE", "LATITUDE"))
 
 # Read in shapefiles
-sa3 <- sf::st_read(file.path('data','raw','SA3_2016_AUST.shp'))
-mb <- sf::st_read(file.path('data','raw','MB_2016_ACT.shp'))
+sa3 <- sf::st_read(file.path("..", "data", "SA3_2021_AUST_GDA2020.shp"))
+mb <- sf::st_read(file.path("..", "data", "MB_2021_AUST_GDA2020.shp"))
 
 # set CRS for the points to be the same as shapefile
 st_crs(point) <- st_crs(mb)
@@ -44,7 +46,7 @@ mapdeck(style = ms, pitch = 45, location = c(134, -28), zoom = 4) %>%
     , stroke_colour = "SA3_CODE"
     , stroke_width = 8
     , stroke_opacity = .5
-    # Add the point layer, filtering to only include points with MB_CAT16 equal to 'Residential'
+    # Add the point layer, filtering to only include points with MB_CAT16 equal to 'Residential' # nolint
   ) %>% add_scatterplot(
     data = filter(isd_ca_co_pts, MB_CAT16 == 'Residential')
     , lat = "LATITUDE"
